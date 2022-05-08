@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\EmployeeRepository;
 use App\Repository\EmployeeRequestsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -25,12 +26,12 @@ class EmployeeRequests
     /**
      * @ORM\Column(type="integer")
      */
-    private $manager_id;
+    private $manager_id = 0;
 
     /**
      * @ORM\Column(type="integer")
      */
-    private $status;
+    private $status = 0;
 
     /**
      * @ORM\Column(type="datetime")
@@ -56,6 +57,20 @@ class EmployeeRequests
      * @ORM\Column(type="datetime")
      */
     private $updated_at;
+
+    public const REQUEST_STATUSES = [
+        '0' => 'Pending',
+        '1' => 'Approved',
+    ];
+
+    public function __construct()
+    {
+        if (is_null($this->id)) {
+            $this->setCreatedAt(new \DateTime());
+        }
+
+        $this->setUpdatedAt(new \DateTime());
+    }
 
     public function getId(): ?int
     {
@@ -156,5 +171,13 @@ class EmployeeRequests
         $this->updated_at = $updated_at;
 
         return $this;
+    }
+
+    public function getBookedVacationDays(): int
+    {
+        return date_diff(
+                $this->getVacationStartDate(),
+                $this->getVacationEndDate(),
+            )->format('%a') + 1;
     }
 }

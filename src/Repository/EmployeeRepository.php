@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Employee;
+use App\Entity\EmployeeVacations;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,6 +18,26 @@ class EmployeeRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Employee::class);
+    }
+
+    public function getLeftVacationsDays($year, $employeeId): int
+    {
+        $ev = $this->getEntityManager()->getRepository(EmployeeVacations::class);
+        $entity = $ev->findOneBy([
+            'employee_id' => $employeeId,
+            'year' => $year,
+        ]);
+
+        $er = $this->getEntityManager()->createQueryBuilder();
+        $usedDays = $er->select('SUM(err.vacation_days) as days')
+            ->from('App\Entity\EmployeeRequests', 'err')
+            ->andWhere('err.employee_id = :id')
+            ->andWhere('err.status = 1')
+            ->setParameter('id', $employeeId)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return (int)$entity->getDays() - (int)$usedDays['days'];
     }
 
     // /**
